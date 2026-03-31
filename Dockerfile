@@ -1,34 +1,40 @@
-# --- Stage 1: Build Stage ---
-FROM maven:3.8.5-openjdk-17-slim AS build
+# --- STAGE 1: Build Stage (The "Heavy" lifting) ---
+# We use a full JDK and Maven to compile the code.
+FROM maven:3.9.6-eclipse-temurin-17-alpine AS builder
 
 WORKDIR /app
 
-# Copy only the pom.xml first to cache dependencies
+# 1. Copy only the pom.xml to cache dependencies. 
+# This speeds up future builds if dependencies haven't changed.
 COPY pom.xml .
 RUN mvn dependency:go-offline -B
 
-# Copy the source code and build the application
+# 2. Copy source code and build the fat JAR.
 COPY src ./src
 RUN mvn clean package -DskipTests
 
-# --- Stage 2: Runtime Stage ---
-FROM openjdk:17-jdk-slim
+# --- STAGE 2: Runtime Stage (The "Slim" footprint) ---
+# We switch to a lightweight JRE (Java Runtime Environment) for production.
+FROM eclipse-temurin:17-jre-alpine
 
 WORKDIR /app
 
-# SRE Best Practice: Run as a non-root user
-RUN groupadd -r appgroup && useradd -r -g appgroup appuser
+# 3. SRE Best Practice: Create a non-root user for security.
+# GKE pods should never run as root to minimize the blast radius of a breach.
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
-# Copy the compiled .jar file from the build stage
-# Note: Ensure the 'target' filename matches your project's artifact ID
-COPY --from=build /app/target/*.jar app.jar
+# 4. Copy the compiled JAR from the builder stage.
+# Ensure the name matches your project's artifactId in pom.xml.
+COPY --from=builder /app/target/*.jar app.jar
 
-# Change ownership to the non-root user
+# 5. Set ownership to the non-root user.
 RUN chown appuser:appgroup app.jar
 USER appuser
 
-# Expose the port (must match your service's targetPort: 3000)
+# 6. Expose the port (Must match your service's targetPort: 3000).
 EXPOSE 3000
 
-# Optimization: Use exec form for CMD to allow SIGTERM propagation
-ENTRYPOINT ["java", "-Xmx512m", "-Xms128m", "-jar", "app.jar"]
+# 7. Optimization: JVM Memory Tuning.
+# Since your values.yaml has a 512Mi limit, we set Xmx to 400m 
+# to leave room for the OS and non-heap memory.
+ENTRYPOINT ["java", "-Xms128m", "-Xmx400m", "-jar", "app.jar"]
