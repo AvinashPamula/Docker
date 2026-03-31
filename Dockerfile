@@ -1,40 +1,41 @@
-# --- STAGE 1: Build Stage (The "Heavy" lifting) ---
-# We use a full JDK and Maven to compile the code.
-FROM maven:3.9.6-eclipse-temurin-17-alpine AS builder
+# --- STAGE 1: Build Stage ---
+# Use the Gradle image to compile the application
+FROM gradle:8.5-jdk17-alpine AS builder
 
 WORKDIR /app
 
-# 1. Copy only the pom.xml to cache dependencies. 
-# This speeds up future builds if dependencies haven't changed.
-COPY pom.xml .
-RUN mvn dependency:go-offline -B
+# 1. Copy only the Gradle wrapper and configuration files first
+# This allows Docker to cache your dependencies (major time saver!)
+COPY build.gradle settings.gradle ./
+# If you have a 'gradle' folder with the wrapper, copy it too:
+# COPY gradle ./gradle
+# COPY gradlew ./
 
-# 2. Copy source code and build the fat JAR.
+# Download dependencies (this will fail if no source, so we use a trick or just skip to build)
+# RUN gradle build -x test --continue 
+
+# 2. Copy the source code and build the application
 COPY src ./src
-RUN mvn clean package -DskipTests
+RUN gradle clean bootJar -x test
 
-# --- STAGE 2: Runtime Stage (The "Slim" footprint) ---
-# We switch to a lightweight JRE (Java Runtime Environment) for production.
+# --- STAGE 2: Runtime Stage ---
 FROM eclipse-temurin:17-jre-alpine
 
 WORKDIR /app
 
-# 3. SRE Best Practice: Create a non-root user for security.
-# GKE pods should never run as root to minimize the blast radius of a breach.
+# 3. Security: Run as a non-root user
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
-# 4. Copy the compiled JAR from the builder stage.
-# Ensure the name matches your project's artifactId in pom.xml.
-COPY --from=builder /app/target/*.jar app.jar
+# 4. Copy the compiled JAR from the builder stage
+# Gradle usually puts the JAR in build/libs/
+COPY --from=builder /app/build/libs/*.jar app.jar
 
-# 5. Set ownership to the non-root user.
+# 5. Set ownership and switch user
 RUN chown appuser:appgroup app.jar
 USER appuser
 
-# 6. Expose the port (Must match your service's targetPort: 3000).
+# 6. Expose the port (matches your GKE Service targetPort: 3000)
 EXPOSE 3000
 
-# 7. Optimization: JVM Memory Tuning.
-# Since your values.yaml has a 512Mi limit, we set Xmx to 400m 
-# to leave room for the OS and non-heap memory.
+# 7. JVM Tuning for your 512Mi GKE Limit
 ENTRYPOINT ["java", "-Xms128m", "-Xmx400m", "-jar", "app.jar"]
