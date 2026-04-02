@@ -27,10 +27,10 @@ jobs:
         with:
           path: ${{ env.APP_REPO_NAME }}
 
-      - name: Checkout Project-Z (GitOps)
+      - name: Checkout practice1 (GitOps)
         uses: actions/checkout@v4
         with:
-          repository: AvinashPamula/project-z
+          repository: AvinashPamula/practice1
           token: ${{ secrets.GITOPS_PAT }}
           path: ${{ env.GITOPS_REPO_NAME }}
 
