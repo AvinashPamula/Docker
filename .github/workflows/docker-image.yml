@@ -8,7 +8,7 @@ on:
 
 env:
   IMAGE_REPO_NAME: "unknown"
-  APP_REPO_NAME: "Docker"
+  APP_REPO_NAME: "Project-b"
   GITOPS_REPO_NAME: "practice1"
   GCP_REGION: "us-east1"
 
@@ -22,7 +22,7 @@ jobs:
 
     steps:
       # 1. CHECKOUT BOTH REPOSITORIES
-      - name: Checkout Docker (App)
+      - name: Checkout Project-b (App)
         uses: actions/checkout@v4
         with:
           path: ${{ env.APP_REPO_NAME }}
