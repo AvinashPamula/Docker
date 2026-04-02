@@ -9,7 +9,7 @@ on:
 env:
   IMAGE_REPO_NAME: "unknown"
   APP_REPO_NAME: "Docker"
-  GITOPS_REPO_NAME: "project-z"
+  GITOPS_REPO_NAME: "practice1"
   GCP_REGION: "us-east1"
 
 jobs:
@@ -66,76 +66,76 @@ jobs:
           echo "HELM_VERSION=$HELM_VERSION" >> $GITHUB_OUTPUT
           echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_OUTPUT
           
-      # # 4. UPDATE LOCAL chart aND VALUES FILES (Project-K)
-      # - name: Helm Version Update
-      #   working-directory: ./${{ env.APP_REPO_NAME }}
-      #   run: |
-      #     IMG_VER="${{ steps.build_step.outputs.IMAGE_VERSION }}"
-      #     HELM_VER="${{ steps.build_step.outputs.HELM_VERSION }}"
+      # 4. UPDATE LOCAL chart aND VALUES FILES (Project-K)
+      - name: Helm Version Update
+        working-directory: ./${{ env.APP_REPO_NAME }}
+        run: |
+          IMG_VER="${{ steps.build_step.outputs.IMAGE_VERSION }}"
+          HELM_VER="${{ steps.build_step.outputs.HELM_VERSION }}"
           
-      #     CHART_PATH="charts/my-app/Chart.yaml"
-      #     VALUES_PATH="charts/my-app/values.yaml"
+          CHART_PATH="charts/my-app/Chart.yaml"
+          VALUES_PATH="charts/my-app/values.yaml"
           
-      #     # Clean and safe updates using yq
-      #     yq -i ".version = \"$HELM_VER\"" $CHART_PATH
-      #     # yq -i ".appVersion = \"$IMG_VER\"" $CHART_PATH
+          # Clean and safe updates using yq
+          yq -i ".version = \"$HELM_VER\"" $CHART_PATH
+          # yq -i ".appVersion = \"$IMG_VER\"" $CHART_PATH
           
-      #     # Update nested image tag
-      #     yq -i ".[\"my-app\"].image.tag = \"$IMG_VER\"" $VALUES_PATH   
+          # Update nested image tag
+          yq -i ".[\"my-app\"].image.tag = \"$IMG_VER\"" $VALUES_PATH   
 
           
-      #   # 5. SYNC APP REPO (Project-K)
-      # - name: Commit and Push Version Updates to Project-K
-      #   working-directory: ./${{ env.APP_REPO_NAME }}
-      #   run: |
-      #     git config user.name "github-actions[bot]"
-      #     git config user.email "github-actions[bot]@users.noreply.github.com"
-      #     git add charts/my-app/Chart.yaml charts/my-app/values.yaml
-      #     git commit -m "chore: bump version to ${{ steps.build_step.outputs.VERSION }} [skip ci]" || echo "No changes"
-      #     git push origin test
+        # 5. SYNC APP REPO (Project-K)
+      - name: Commit and Push Version Updates to Project-K
+        working-directory: ./${{ env.APP_REPO_NAME }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add charts/my-app/Chart.yaml charts/my-app/values.yaml
+          git commit -m "chore: bump version to ${{ steps.build_step.outputs.VERSION }} [skip ci]" || echo "No changes"
+          git push origin test
 
-      # # 5. PUSH ARTIFACTS
-      # - name: Docker Push
-      #   run: |
-      #     docker push ${{ steps.build_step.outputs.IMAGE_URI }}:${{ steps.build_step.outputs.IMAGE_VERSION }}
+      # 5. PUSH ARTIFACTS
+      - name: Docker Push
+        run: |
+          docker push ${{ steps.build_step.outputs.IMAGE_URI }}:${{ steps.build_step.outputs.IMAGE_VERSION }}
 
-      # - name: Helm Push (OCI)
-      #   working-directory: ./${{ env.APP_REPO_NAME }}/charts/my-app
-      #   run: |
-      #     HELM_VER=${{ steps.build_step.outputs.HELM_VERSION }}
-      #     helm package . --version $HELM_VER
-      #     helm push my-app-$HELM_VER.tgz oci://${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/test
+      - name: Helm Push (OCI)
+        working-directory: ./${{ env.APP_REPO_NAME }}/charts/my-app
+        run: |
+          HELM_VER=${{ steps.build_step.outputs.HELM_VERSION }}
+          helm package . --version $HELM_VER
+          helm push my-app-$HELM_VER.tgz oci://${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/unknown
 
-      # # 6. SYNC GITOPS REPO (Project-Z)
-      # - name: Update Versions and Sync to Project-Z
-      #   env:
-      #     GH_TOKEN: ${{ secrets.GITOPS_PAT }}
-      #   run: |
-      #     set -euo pipefail
+      # 6. SYNC GITOPS REPO (Project-Z)
+      - name: Update Versions and Sync to Project-Z
+        env:
+          GH_TOKEN: ${{ secrets.GITOPS_PAT }}
+        run: |
+          set -euo pipefail
           
-      #     # Use the variables exported from the Build step
-      #     IMG_VER="${{ steps.build_step.outputs.IMAGE_VERSION }}"
-      #     HELM_VER="${{ steps.build_step.outputs.HELM_VERSION }}"
+          # Use the variables exported from the Build step
+          IMG_VER="${{ steps.build_step.outputs.IMAGE_VERSION }}"
+          HELM_VER="${{ steps.build_step.outputs.HELM_VERSION }}"
           
-      #     # Ensure this path is 100% correct in your repo
-      #     REPO_PATH="${{ env.GITOPS_REPO_NAME }}/My_first_DevOps_Project-main"
+          # Ensure this path is 100% correct in your repo
+          REPO_PATH="${{ env.GITOPS_REPO_NAME }}"
           
-      #     # 1. Update the image tag in values.yaml
-      #     yq -i -e ".[\"my-app\"].image.tag = \"$IMG_VER\"" "$REPO_PATH/values.yaml"
+          # 1. Update the image tag in values.yaml
+          yq -i -e ".[\"my-app\"].image.tag = \"$IMG_VER\"" "$REPO_PATH/values.yaml"
           
-      #     # 2. Update the Chart version (using the correct .yaml extension)
-      #     yq -i -e ".version = \"$HELM_VER\"" "$REPO_PATH/Chart.yaml"
+          # 2. Update the Chart version (using the correct .yaml extension)
+          yq -i -e ".version = \"$HELM_VER\"" "$REPO_PATH/Chart.yaml"
           
-      #     # 3. If you have dependencies, use HELM_VER (not VERSION)
-      #     # Only keep this line if your Chart.yaml actually has a 'dependencies' section
-      #     yq -i -e ".dependencies[0].version = \"$HELM_VER\"" "$REPO_PATH/Chart.yaml"
+          # 3. If you have dependencies, use HELM_VER (not VERSION)
+          # Only keep this line if your Chart.yaml actually has a 'dependencies' section
+          yq -i -e ".dependencies[0].version = \"$HELM_VER\"" "$REPO_PATH/Chart.yaml"
 
-      #     # Git Operations
-      #     cd ${{ env.GITOPS_REPO_NAME }}
-      #     git config user.name "github-actions[bot]"
-      #     git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Git Operations
+          cd ${{ env.GITOPS_REPO_NAME }}
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           
-      #     git add .
-      #     # The '|| echo' prevents the script from failing if there are no changes to commit
-      #     git commit -m "chore: deploy image $IMG_VER with chart version $HELM_VER" || echo "No changes to commit"
-      #     git push origin master
+          git add .
+          # The '|| echo' prevents the script from failing if there are no changes to commit
+          git commit -m "chore: deploy image $IMG_VER with chart version $HELM_VER" || echo "No changes to commit"
+          git push origin master
