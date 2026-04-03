@@ -100,7 +100,7 @@ jobs:
           docker push ${{ steps.build_step.outputs.IMAGE_URI }}:${{ steps.build_step.outputs.IMAGE_VERSION }}
 
       - name: Helm Push (OCI)
-        working-directory: ./${{ env.APP_REPO_NAME }}/charts/my-app
+        working-directory: ./${{ env.APP_REPO_NAME }}/unknown
         run: |
           HELM_VER=${{ steps.build_step.outputs.HELM_VERSION }}
           helm package . --version $HELM_VER
