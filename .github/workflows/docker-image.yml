@@ -1,15 +1,14 @@
 name: Build and Helm Deploy
 
 
-
 on:
   push:
     branches: [ "test" ]
   workflow_dispatch:
 
 env:
-  IMAGE_REPO_NAME: "unknown"
-  APP_REPO_NAME: "Project-b"
+  IMAGE_REPO_NAME: "test/my-app"
+  APP_REPO_NAME: "Projeck-b"
   GITOPS_REPO_NAME: "practice1"
   GCP_REGION: "us-east1"
 
@@ -23,15 +22,15 @@ jobs:
 
     steps:
       # 1. CHECKOUT BOTH REPOSITORIES
-      - name: Checkout Project-b (App)
+      - name: Checkout Project-K (App)
         uses: actions/checkout@v4
         with:
           path: ${{ env.APP_REPO_NAME }}
 
-      - name: Checkout practice1 (GitOps)
+      - name: Checkout Project-Z (GitOps)
         uses: actions/checkout@v4
         with:
-          repository: AvinashPamula/practice1
+          repository: AvinashPamula/project-z
           token: ${{ secrets.GITOPS_PAT }}
           path: ${{ env.GITOPS_REPO_NAME }}
 
@@ -91,7 +90,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add unknown/Chart.yaml unknown/values.yaml
+          git add /unknown/Chart.yaml unknown/values.yaml
           git commit -m "chore: bump version to ${{ steps.build_step.outputs.VERSION }} [skip ci]" || echo "No changes"
           git push origin test
 
@@ -101,7 +100,7 @@ jobs:
           docker push ${{ steps.build_step.outputs.IMAGE_URI }}:${{ steps.build_step.outputs.IMAGE_VERSION }}
 
       - name: Helm Push (OCI)
-        working-directory: ./${{ env.APP_REPO_NAME }}/unknown
+        working-directory: ./${{ env.APP_REPO_NAME }}/charts/my-app
         run: |
           HELM_VER=${{ steps.build_step.outputs.HELM_VERSION }}
           helm package . --version $HELM_VER
@@ -119,10 +118,10 @@ jobs:
       #     HELM_VER="${{ steps.build_step.outputs.HELM_VERSION }}"
           
       #     # Ensure this path is 100% correct in your repo
-      #     REPO_PATH="${{ env.GITOPS_REPO_NAME }}"
+      #     REPO_PATH="${{ env.GITOPS_REPO_NAME }}/My_first_DevOps_Project-main"
           
       #     # 1. Update the image tag in values.yaml
-      #     yq -i -e ".[\"unknown\"].image.tag = \"$IMG_VER\"" "$REPO_PATH/values.yaml"
+      #     yq -i -e ".[\"my-app\"].image.tag = \"$IMG_VER\"" "$REPO_PATH/values.yaml"
           
       #     # 2. Update the Chart version (using the correct .yaml extension)
       #     yq -i -e ".version = \"$HELM_VER\"" "$REPO_PATH/Chart.yaml"
