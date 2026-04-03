@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 env:
-  IMAGE_REPO_NAME: "unknown"
+  IMAGE_REPO_NAME: "unknown/unknown"
   APP_REPO_NAME: "Project-b"
   GITOPS_REPO_NAME: "practice1"
   GCP_REGION: "us-east1"
