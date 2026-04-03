@@ -90,7 +90,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add /unknown/Chart.yaml unknown/values.yaml
+          git add unknown/Chart.yaml unknown/values.yaml
           git commit -m "chore: bump version to ${{ steps.build_step.outputs.VERSION }} [skip ci]" || echo "No changes"
           git push origin test
 
