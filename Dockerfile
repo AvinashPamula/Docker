@@ -1,34 +1,36 @@
 # --- STAGE 1: Build & Dependencies ---
 FROM node:20-alpine AS installer
 
+# Create app directory
 WORKDIR /app
 
-# Copy package files
+# Copy package.json AND package-lock.json (if available)
+# Using the wildcard * ensures it doesn't fail if lockfile is missing
 COPY package*.json ./
 
-# Install dependencies
+# Install dependencies (This will now find the file)
 RUN npm install
 
-# Copy the application source code
+# Copy your app.js
 COPY app.js ./
-
 
 # --- STAGE 2: Production Runtime ---
 FROM node:20-alpine AS runtime
 
-# Set environment to production for performance optimizations
+# Set to production for better performance with Express
 ENV NODE_ENV=production
 
 WORKDIR /app
 
-# Only copy the node_modules and app.js from the 'installer' stage
+# Copy ONLY what is needed from the installer stage
 COPY --from=installer /app/node_modules ./node_modules
 COPY --from=installer /app/package*.json ./
 COPY --from=installer /app/app.js ./
 
-# Run as a non-root user for better security
+# Security: Don't run as root
 USER node
 
+# Match the port in your app.js
 EXPOSE 9000
 
 CMD ["node", "app.js"]
