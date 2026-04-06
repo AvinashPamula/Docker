@@ -105,34 +105,35 @@ jobs:
           HELM_VER=${{ steps.build_step.outputs.HELM_VERSION }}
           helm package . --version $HELM_VER
           helm push unknown-$HELM_VER.tgz oci://${{ env.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/unknown
-      # # 6. SYNC GITOPS REPO (Project-Z)
-      # - name: Update Versions and Sync to Project-Z
-      #   env:
-      #     GH_TOKEN: ${{ secrets.GITOPS_PAT }}
-      #   run: |
-      #     set -euo pipefail
           
-      #     # Use the variables exported from the Build step
-      #     IMG_VER="${{ steps.build_step.outputs.IMAGE_VERSION }}"
-      #     HELM_VER="${{ steps.build_step.outputs.HELM_VERSION }}"
+      # 6. SYNC GITOPS REPO (Project-Z)
+      - name: Update Versions and Sync to Project-Z
+        env:
+          GH_TOKEN: ${{ secrets.GITOPS_PAT }}
+        run: |
+          set -euo pipefail
           
-      #     # Ensure this path is 100% correct in your repo
-      #     REPO_PATH="${{ env.GITOPS_REPO_NAME }}/My_first_DevOps_Project-main"
+          # Use the variables exported from the Build step
+          IMG_VER="${{ steps.build_step.outputs.IMAGE_VERSION }}"
+          HELM_VER="${{ steps.build_step.outputs.HELM_VERSION }}"
           
-      #     # 1. Update the image tag in values.yaml
-      #     yq -i -e ".[\"my-app\"].image.tag = \"$IMG_VER\"" "$REPO_PATH/values.yaml"
+          # Ensure this path is 100% correct in your repo
+          REPO_PATH="${{ env.GITOPS_REPO_NAME }}/"
           
-      #     # 2. Update the Chart version (using the correct .yaml extension)
-      #     yq -i -e ".version = \"$HELM_VER\"" "$REPO_PATH/Chart.yaml"
+          # 1. Update the image tag in values.yaml
+          yq -i -e ".[\"unknown\"].image.tag = \"$IMG_VER\"" "$REPO_PATH/values.yaml"
           
-      #     # 3. If you have dependencies, use HELM_VER (not VERSION)
-      #     # Only keep this line if your Chart.yaml actually has a 'dependencies' section
-      #     yq -i -e ".dependencies[0].version = \"$HELM_VER\"" "$REPO_PATH/Chart.yaml"
+          # 2. Update the Chart version (using the correct .yaml extension)
+          yq -i -e ".version = \"$HELM_VER\"" "$REPO_PATH/Chart.yaml"
+          
+          # 3. If you have dependencies, use HELM_VER (not VERSION)
+          # Only keep this line if your Chart.yaml actually has a 'dependencies' section
+          yq -i -e ".dependencies[0].version = \"$HELM_VER\"" "$REPO_PATH/Chart.yaml"
 
-      #     # Git Operations
-      #     cd ${{ env.GITOPS_REPO_NAME }}
-      #     git config user.name "github-actions[bot]"
-      #     git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Git Operations
+          cd ${{ env.GITOPS_REPO_NAME }}
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           
           # git add .
           # # The '|| echo' prevents the script from failing if there are no changes to commit
