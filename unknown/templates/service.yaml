@@ -1,14 +1,18 @@
 apiVersion: v1
 kind: Service
 metadata:
+  # This ensures the name is 'my-app' if you set fullnameOverride in values.yaml
   name: {{ include "unknown.fullname" . }}
   labels:
     {{- include "unknown.labels" . | nindent 4 }}
+  annotations:
+    # Required for GKE Ingress to talk directly to Pods
+    cloud.google.com/neg: '{"ingress": true}'
 spec:
   type: {{ .Values.service.type }}
   ports:
-    - port: {{ .Values.service.port }}
-      targetPort: http
+    - port: {{ .Values.service.port }}       # Usually 80
+      targetPort: {{ .Values.service.targetPort }} # Usually 3000
       protocol: TCP
       name: http
   selector:
