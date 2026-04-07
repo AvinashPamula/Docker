@@ -118,7 +118,7 @@ jobs:
           HELM_VER="${{ steps.build_step.outputs.HELM_VERSION }}"
           
           # Ensure this path is 100% correct in your repo
-          REPO_PATH="${{ env.GITOPS_REPO_NAME }}/"
+          REPO_PATH="${{ env.GITOPS_REPO_NAME }}/main"
           
           # 1. Update the image tag in values.yaml
           yq -i -e ".[\"unknown\"].image.tag = \"$IMG_VER\"" "$REPO_PATH/values.yaml"
