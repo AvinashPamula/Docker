@@ -19,6 +19,7 @@ jobs:
     permissions:
       contents: write
       id-token: write
+      security-events: write
 
     steps:
       # 1. CHECKOUT BOTH REPOSITORIES
@@ -76,6 +77,7 @@ jobs:
         if: always() # Upload results even if vulnerabilities are found
         with:
           sarif_file: 'trivy-results.sarif'
+          checkout_path: ./${{ env.APP_REPO_NAME }}
           
       # 4. UPDATE LOCAL chart aND VALUES FILES (Project-K)
       - name: Helm Version Update
