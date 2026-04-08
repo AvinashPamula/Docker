@@ -70,7 +70,7 @@ jobs:
           image-ref: '${{ steps.build_step.outputs.IMAGE_URI }}:${{ steps.build_step.outputs.IMAGE_VERSION }}'
           format: 'sarif'
           output: 'trivy-results.sarif'
-          severity: 'CRITICAL,HIGH'
+          severity: 'CRITICAL,HIGH,LOW'
 
       - name: Upload Trivy scan results to GitHub Security
         uses: github/codeql-action/upload-sarif@v3
