@@ -4,6 +4,6 @@
   "main": "app.js",
   "dependencies": {
     "express": "^4.18.2",
-    "launchdarkly-node-server-sdk": "^9.0.0"
+    "launchdarkly-node-server-sdk": "^7.0.0"
   }
 }
